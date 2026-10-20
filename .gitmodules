@@ -1,0 +1,3 @@
+[submodule "sailfish-cards"]
+	path = sailfish-cards
+	url = https://github.com/klahr/sailfish-cards.git

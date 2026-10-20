@@ -1,0 +1,4 @@
+* Tue Oct 20 2026 Joachim Klahr <klahr@r8.rs> 0.1.0-1
+- First release: contract bridge with a bot partner against two bots in
+  three levels, four bidding systems with every call explained, rubber
+  bridge and Chicago scoring, play speed setting and statistics per level

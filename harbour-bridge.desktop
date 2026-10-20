@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=harbour-bridge
+Exec=harbour-bridge
+Name=Bridge
+Name[sv]=Bridge
+
+[X-Sailjail]
+OrganizationName=rs.r8
+ApplicationName=harbour-bridge
+Permissions=
