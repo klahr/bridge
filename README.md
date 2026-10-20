@@ -2,8 +2,8 @@
 
 Contract bridge for Sailfish OS: you and a bot partner against two bots.
 
-- Bidding in Standard American, two over one, Acol or Precision, chosen for each side,
-  with every call explained
+- Bidding in Standard American, two over one, Acol, Precision or Enkel modern standard,
+  chosen for each side, with every call explained
 - Play the contract with dummy's cards when your side declares, or defend it
 - Rubber bridge or Chicago scoring, a score sheet and a review of each deal
 - Bots in three levels, up to one that reads the bidding and solves the last tricks exactly

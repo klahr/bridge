@@ -15,11 +15,10 @@ int hcp(const Cards &cards)
 
 void sortHand(Cards &cards)
 {
-    static const int order[] = {2, 3, 1, 0}; // by suit: clubs, diamonds, hearts, spades
     std::sort(cards.begin(), cards.end(), [](const Card &a, const Card &b) {
         if (a.suit != b.suit)
-            return order[a.suit] < order[b.suit];
-        return a.high() > b.high();
+            return a.suit < b.suit;
+        return a.high() < b.high();
     });
 }
 

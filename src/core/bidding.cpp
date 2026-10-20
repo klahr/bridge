@@ -12,16 +12,25 @@ using Test = std::function<bool(const HandEval &)>;
 const System Systems[SystemCount] = {
     // Standard American: five-card majors, a strong notrump, weak twos.
     {SystemId::Standard, {15, 17}, {20, 21}, 22, true, false, false, true, true, true,
-     {11, 21}, {12, 14}, {18, 19}, {6, 10}, {13, 15}, {16, 17}},
+     {11, 21}, {12, 14}, {18, 19}, {6, 10}, {13, 15}, {16, 17},
+     false, false, false, {22, 24}, {5, 10}, 4, false, 10},
     // The same, with a two-level response forcing to game and 1NT forcing over a major.
     {SystemId::TwoOverOne, {15, 17}, {20, 21}, 22, true, false, true, true, true, true,
-     {11, 21}, {12, 14}, {18, 19}, {6, 10}, {13, 15}, {16, 17}},
+     {11, 21}, {12, 14}, {18, 19}, {6, 10}, {13, 15}, {16, 17},
+     false, false, false, {22, 24}, {5, 10}, 4, false, 10},
     // Acol: four-card suits and a weak notrump.
     {SystemId::Acol, {12, 14}, {20, 22}, 23, false, false, false, false, true, true,
-     {11, 22}, {15, 17}, {18, 19}, {6, 9}, {10, 12}, {13, 15}},
+     {11, 22}, {15, 17}, {18, 19}, {6, 9}, {10, 12}, {13, 15},
+     false, false, false, {23, 25}, {5, 10}, 4, false, 10},
     // Precision: a strong club, everything else limited to 15.
     {SystemId::Precision, {13, 15}, {22, 23}, 0, true, true, false, true, true, false,
-     {11, 15}, {11, 12}, {1, 0}, {6, 10}, {11, 12}, {13, 15}},
+     {11, 15}, {11, 12}, {1, 0}, {6, 10}, {11, 12}, {13, 15},
+     false, false, false, {22, 24}, {5, 10}, 4, false, 10},
+    // Enkel modern standard, as taught in Sweden: four-card suits, a strong
+    // notrump, and 2NT raising any suit.
+    {SystemId::ModernStandard, {15, 17}, {20, 21}, 22, false, false, false, false, true, true,
+     {11, 21}, {12, 14}, {18, 19}, {6, 10}, {11, 12}, {13, 15},
+     true, true, true, {22, 23}, {6, 11}, 1, true, 11},
 };
 
 bool isMajor(int s) { return s == Hearts || s == Spades; }
@@ -45,6 +54,25 @@ int pickSuit(const HandEval &e, const std::vector<int> &suits, int minLen)
             best = s;
     }
     return best;
+}
+
+// The four-card opening of Enkel modern standard: the longest suit and the
+// higher of two fives, but of fours hearts, spades and the better minor.
+int heartsFirst(const HandEval &e)
+{
+    const int longest = *std::max_element(e.len, e.len + 4);
+    if (longest >= 5)
+        return pickSuit(e, {Clubs, Diamonds, Hearts, Spades}, 4);
+    if (e.len[Hearts] == 4)
+        return Hearts;
+    if (e.len[Spades] == 4)
+        return Spades;
+    if (e.len[Clubs] < 4 || e.len[Diamonds] < 4)
+        return e.len[Clubs] == 4 ? Clubs : Diamonds;
+    int points[4] = {};
+    for (const Card &card : e.cards)
+        points[card.suit] += hcp(card);
+    return points[Diamonds] > points[Clubs] ? Diamonds : Clubs;
 }
 
 bool stopped(const HandEval &e, const std::vector<int> &suits)
@@ -249,22 +277,23 @@ void openings(const Ctx &c, Rules &r)
     } else {
         // Four-card suits: the longest, the higher of two five-card suits
         // and the lower of two fours.
+        const bool majorsFirst = s.heartsFirst;
         for (int suit = Spades; suit >= Clubs; --suit) {
-            r.push_back(bid(1, suit).hcp(lo, hi).length(suit, 4).when([openable, suit](const HandEval &e) {
-                return openable(e) && pickSuit(e, {Clubs, Diamonds, Hearts, Spades}, 4) == suit;
+            r.push_back(bid(1, suit).hcp(lo, hi).length(suit, 4).when([openable, suit, majorsFirst](const HandEval &e) {
+                return openable(e) && (majorsFirst ? heartsFirst(e) : pickSuit(e, {Clubs, Diamonds, Hearts, Spades}, 4)) == suit;
             }));
         }
     }
 
     if (!fourth) {
         for (int suit : {Spades, Hearts})
-            r.push_back(bid(4, suit).hcp(5, 11).length(suit, 8).as(Convention::Preempt));
+            r.push_back(bid(4, suit).hcp(s.preempt.min, 11).length(suit, 8).as(Convention::Preempt));
         for (int suit = Spades; suit >= Clubs; --suit)
-            r.push_back(bid(3, suit).hcp(5, 10).length(suit, 7, 7).as(Convention::Preempt).when([suit](const HandEval &e) {
+            r.push_back(bid(3, suit).hcp(s.preempt).length(suit, 7, 7).as(Convention::Preempt).when([suit](const HandEval &e) {
                 return goodSuit(e, suit);
             }));
         for (int suit = Spades; suit >= (s.weakTwoDiamonds ? Diamonds : Hearts); --suit) {
-            r.push_back(bid(2, suit).hcp(5, 10).length(suit, 6, 6).as(Convention::WeakTwo).when([suit](const HandEval &e) {
+            r.push_back(bid(2, suit).hcp(s.preempt).length(suit, 6, 6).withAces(0, s.preemptAces).as(Convention::WeakTwo).when([suit](const HandEval &e) {
                 // No four-card major on the side.
                 for (int m : {Hearts, Spades})
                     if (m != suit && e.len[m] >= 4)
@@ -533,19 +562,21 @@ bool openingConventions(const Ctx &c, Rules &r)
 
     // Strong 2C.
     if (partner->convention == Convention::StrongTwo && first) {
-        for (int s : {Spades, Hearts, Clubs, Diamonds}) {
-            r.push_back(bid(c.cheapest(s), s).hcp(8).length(s, 5).forcing(Force::Game).when([s](const HandEval &e) {
-                return goodSuit(e, s) && pickSuit(e, {Clubs, Diamonds, Hearts, Spades}, 5) == s;
-            }));
+        if (!c.sys.relayTwo) {
+            for (int s : {Spades, Hearts, Clubs, Diamonds}) {
+                r.push_back(bid(c.cheapest(s), s).hcp(8).length(s, 5).forcing(Force::Game).when([s](const HandEval &e) {
+                    return goodSuit(e, s) && pickSuit(e, {Clubs, Diamonds, Hearts, Spades}, 5) == s;
+                }));
+            }
+            r.push_back(bid(2, NoTrump).hcp(8).bal().forcing(Force::Game));
         }
-        r.push_back(bid(2, NoTrump).hcp(8).bal().forcing(Force::Game));
         r.push_back(bid(2, Diamonds).as(Convention::Waiting).forcing(Force::Game));
         return true;
     }
     if (mine && mine->convention == Convention::StrongTwo && partner->convention == Convention::Waiting) {
-        const int lo = c.sys.strongTwo;
-        r.push_back(bid(2, NoTrump).hcp(lo, lo + 2).bal());
-        r.push_back(bid(3, NoTrump).hcp(lo + 3).bal());
+        const Range nt = c.sys.strongTwoNT;
+        r.push_back(bid(2, NoTrump).hcp(nt).bal());
+        r.push_back(bid(3, NoTrump).hcp(nt.max + 1).bal());
         for (int s : {Spades, Hearts, Clubs, Diamonds}) {
             r.push_back(bid(c.cheapest(s), s).length(s, 5).forcing(Force::Game).when([s](const HandEval &e) {
                 return pickSuit(e, {Clubs, Diamonds, Hearts, Spades}, 5) == s;
@@ -569,6 +600,16 @@ bool openingConventions(const Ctx &c, Rules &r)
         return true;
     }
 
+    // The 2NT raise, answered.
+    if (partner->convention == Convention::RaiseNT && mine && mine->call.isBid()) {
+        const int t = mine->call.strain;
+        if (isMajor(t))
+            r.push_back(bid(3, t).tp(16).forcing(Force::Game));
+        r.push_back(bid(3, NoTrump).hcp(12, 14).bal());
+        r.push_back(isMajor(t) ? bid(4, t) : bid(3, t).forcing(Force::Game));
+        return true;
+    }
+
     // Precision 2D, answered.
     if (partner->convention == Convention::ShortDiamonds && first) {
         for (int s : {Spades, Hearts})
@@ -589,8 +630,9 @@ bool openingConventions(const Ctx &c, Rules &r)
         for (int s = Clubs; s <= Spades; ++s)
             if (s != t)
                 side.push_back(s);
+        const bool invite = c.sys.weakTwoInvite && level == 2;
         if (isMajor(t) && c.cheapest(t) <= 4) {
-            r.push_back(bid(4, t).hcp(level == 2 ? 16 : 14).length(t, 2));
+            r.push_back(bid(4, t).hcp(level == 2 ? (invite ? 18 : 16) : 14).length(t, 2));
             if (level == 2)
                 r.push_back(bid(4, t).length(t, 4));
         }
@@ -600,8 +642,18 @@ bool openingConventions(const Ctx &c, Rules &r)
             }));
         if (!isMajor(t) && c.cheapest(t) <= 5)
             r.push_back(bid(5, t).hcp(15).length(t, 3));
-        if (c.cheapest(t) <= 3)
+        if (invite) {
+            for (int s : side) {
+                if (c.cheapest(s) > 3)
+                    continue;
+                r.push_back(bid(c.cheapest(s), s).hcp(15).length(s, 5).forcing(Force::OneRound).when([s, side](const HandEval &e) {
+                    return goodSuit(e, s) && pickSuit(e, side, 5) == s;
+                }));
+            }
+            r.push_back(bid(3, t).hcp(15, 17).length(t, 2).forcing(Force::Invitational));
+        } else if (c.cheapest(t) <= 3) {
             r.push_back(bid(c.cheapest(t), t).hcp(0, 15).length(t, 3));
+        }
         r.push_back(passCall());
         return true;
     }
@@ -622,6 +674,7 @@ void respondToSuit(const Ctx &c, Rules &r, int opened)
     const int need = major ? (s.fiveCardMajors ? 3 : 4) : opened == Clubs ? (s.fiveCardMajors ? 5 : 4) : (s.strongClub ? 5 : 4);
     const std::vector<int> stops = theirSuit >= 0 ? std::vector<int>{theirSuit} : std::vector<int>{};
     const int top = passedHand ? 11 : 37;
+    const bool raiseNT = s.raiseNT && !interfered && !doubled && !passedHand;
     const Test noMajor = [opened](const HandEval &e) {
         for (int m : {Hearts, Spades})
             if (m != opened && e.len[m] >= 4)
@@ -639,10 +692,12 @@ void respondToSuit(const Ctx &c, Rules &r, int opened)
     if (major) {
         if (s.jacoby && !interfered && !doubled && !passedHand)
             r.push_back(bid(2, NoTrump).sp(opened, 13).length(opened, 4).as(Convention::Jacoby).forcing(Force::Game));
+        if (raiseNT)
+            r.push_back(bid(2, NoTrump).sp(opened, 13).length(opened, 4).as(Convention::RaiseNT, opened).forcing(Force::Game));
         if (L == 2)
             r.push_back(bid(3, opened).sp(opened, 10, 12).length(opened, need).forcing(Force::Invitational));
         if (L <= 4) {
-            if (!s.jacoby || interfered || doubled)
+            if (!(s.jacoby || s.raiseNT) || interfered || doubled)
                 r.push_back(bid(4, opened).sp(opened, 13, passedHand ? 12 : 16).length(opened, 4));
             r.push_back(bid(4, opened).hcp(0, 9).length(opened, 5).when([](const HandEval &e) {
                 return *std::min_element(e.len, e.len + 4) <= 1;
@@ -694,14 +749,14 @@ void respondToSuit(const Ctx &c, Rules &r, int opened)
     const bool gf = s.twoOverOne && !interfered && !passedHand;
     for (int t : two) {
         const int minLen = interfered || (t == Hearts && opened == Spades) ? 5 : 4;
-        Meaning m = bid(2, t).tp(gf ? 13 : (passedHand ? 10 : 10), top).length(t, minLen)
+        Meaning m = bid(2, t).tp(gf ? 13 : s.newSuitTwo, top).length(t, minLen)
                         .forcing(gf ? Force::Game : Force::OneRound).when([two, t, minLen](const HandEval &e) {
                             return pickSuit(e, two, minLen) == t;
                         });
         r.push_back(m);
     }
 
-    if (c.cheapest(NoTrump) == 2 && (!major || !s.jacoby || interfered || doubled)) {
+    if (c.cheapest(NoTrump) == 2 && (!major || !s.jacoby || interfered || doubled) && !raiseNT) {
         r.push_back(bid(2, NoTrump).hcp(interfered ? Range{11, 12} : s.respondNT2).bal()
                         .forcing(s.respondNT2.min >= 13 && !interfered ? Force::Game : Force::Invitational)
                         .when([stops, noMajor](const HandEval &e) { return stopped(e, stops) && noMajor(e); }));
@@ -716,6 +771,9 @@ void respondToSuit(const Ctx &c, Rules &r, int opened)
 
     // Minor raises, with no major to show.
     if (!major) {
+        if (raiseNT)
+            r.push_back(bid(2, NoTrump).sp(opened, 13).length(opened, 4).as(Convention::RaiseNT, opened).forcing(Force::Game)
+                            .when(noMajor));
         if (L == 2)
             r.push_back(bid(3, opened).sp(opened, 10, 12).length(opened, need).forcing(Force::Invitational).when(noMajor));
         if (L <= 3)

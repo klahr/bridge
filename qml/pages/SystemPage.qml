@@ -3,12 +3,14 @@ import Sailfish.Silica 1.0
 import "../components/Suits.js" as Suits
 import "../cards/cards.js" as Cards
 
-// What the calls mean in the systems of this game: yours first, then theirs.
+// What the calls mean in the systems chosen in the settings: yours first, then theirs.
 Page {
     id: page
 
     readonly property color red: Theme.colorScheme === Theme.LightOnDark ? "#ff6e6e" : "#c62828"
-    readonly property var systems: game.started ? game.gameSystems : [game.system, game.theirSystem]
+    readonly property var systems: [game.system, game.theirSystem]
+    // The game being played keeps the systems it was started with.
+    readonly property bool pending: game.started && (game.gameSystems[0] !== systems[0] || game.gameSystems[1] !== systems[1])
 
     allowedOrientations: Orientation.Portrait
 
@@ -21,6 +23,18 @@ Page {
             width: parent.width
 
             PageHeader { title: qsTr("Bidding systems") }
+
+            Label {
+                visible: page.pending
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * x
+                height: visible ? implicitHeight + Theme.paddingLarge : 0
+                wrapMode: Text.Wrap
+                text: qsTr("The game being played is still bid by %1 against %2; these take over in the next game.")
+                      .arg(game.systemName(game.gameSystems[0])).arg(game.systemName(game.gameSystems[1]))
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeSmall
+            }
 
             Repeater {
                 // Theirs only if it is another one.

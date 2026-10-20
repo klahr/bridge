@@ -30,8 +30,7 @@ inline int sideOf(int seat) { return seat % 2; }
 inline int hcp(const Card &c) { return c.rank == 1 ? 4 : c.rank >= 11 ? c.rank - 10 : 0; }
 int hcp(const Cards &cards);
 
-// Spades, hearts, clubs, diamonds, so the colours alternate, each from
-// the ace down.
+// Clubs, diamonds, hearts, spades, each from the two up.
 void sortHand(Cards &cards);
 
 bool contains(const Cards &cards, const Card &card);

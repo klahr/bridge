@@ -1,5 +1,6 @@
 #include "gamecontroller.h"
 
+#include <QStandardPaths>
 #include <QStringList>
 
 using namespace bridge;
@@ -56,6 +57,9 @@ QVariantMap dealMap(const DealRecord &r)
 
 GameController::GameController(QObject *parent)
     : QObject(parent)
+    // Sailjail lets the app write only in its own folder.
+    , m_settings(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + QStringLiteral("/harbour-bridge.conf"),
+                 QSettings::IniFormat)
 {
     m_difficulty = qBound(0, m_settings.value(QStringLiteral("difficulty"), 1).toInt(), 2);
     m_scoring = qBound(0, m_settings.value(QStringLiteral("scoring"), 0).toInt(), 1);
@@ -343,6 +347,8 @@ QString GameController::systemName(int system) const
         return tr("Acol");
     case SystemId::Precision:
         return tr("Precision");
+    case SystemId::ModernStandard:
+        return tr("Enkel modern standard");
     }
     return QString();
 }
@@ -358,6 +364,8 @@ QString GameController::systemDescription(int system) const
         return tr("The British way: four-card suits, a weak notrump of 12 to 14, a strong 2♣ and weak twos.");
     case SystemId::Precision:
         return tr("A strong, artificial 1♣ for 16 or more; every other opening shows 11 to 15. 1NT is 13 to 15.");
+    case SystemId::ModernStandard:
+        return tr("Sweden's teaching system: four-card suits, hearts before spades, a strong notrump of 15 to 17, 2NT raising any suit, a strong 2♣ and weak twos.");
     }
     return QString();
 }
@@ -469,6 +477,9 @@ QString GameController::describe(const Meaning &m) const
         break;
     case Convention::Jacoby:
         parts << tr("Jacoby: a game raise");
+        break;
+    case Convention::RaiseNT:
+        parts << tr("A raise to game or more");
         break;
     case Convention::Shortness:
         parts << tr("A singleton or void");

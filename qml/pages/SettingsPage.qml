@@ -57,6 +57,7 @@ Page {
                     MenuItem { text: game.systemName(1) }
                     MenuItem { text: game.systemName(2) }
                     MenuItem { text: game.systemName(3) }
+                    MenuItem { text: game.systemName(4) }
                 }
                 onCurrentIndexChanged: game.system = currentIndex
             }
@@ -70,6 +71,7 @@ Page {
                     MenuItem { text: game.systemName(1) }
                     MenuItem { text: game.systemName(2) }
                     MenuItem { text: game.systemName(3) }
+                    MenuItem { text: game.systemName(4) }
                 }
                 onCurrentIndexChanged: game.theirSystem = currentIndex
             }

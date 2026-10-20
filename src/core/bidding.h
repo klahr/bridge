@@ -9,8 +9,8 @@
 
 namespace bridge {
 
-enum class SystemId { Standard = 0, TwoOverOne = 1, Acol = 2, Precision = 3 };
-constexpr int SystemCount = 4;
+enum class SystemId { Standard = 0, TwoOverOne = 1, Acol = 2, Precision = 3, ModernStandard = 4 };
+constexpr int SystemCount = 5;
 
 struct Range {
     int min = 0;
@@ -38,6 +38,14 @@ struct System {
     Range respondNT1;       // 1NT response to one of a suit
     Range respondNT2;
     Range respondNT3;
+    bool heartsFirst;       // four-card suits: hearts, spades, then the better minor
+    bool raiseNT;           // 2NT raises any suit: 13 or more and four trumps
+    bool relayTwo;          // 2D is the only answer to 2C
+    Range strongTwoNT;      // opener's 2NT after 2C 2D
+    Range preempt;          // weak twos and three-level openings
+    int preemptAces;        // at most this many in a weak two
+    bool weakTwoInvite;     // over a weak two, three of it invites and a new suit forces
+    int newSuitTwo;         // a new suit at two in answer, unless it forces to game
 };
 
 const System &systemFor(SystemId id);
@@ -56,6 +64,7 @@ enum class Convention {
     Transfer,       // shows `suit`
     TransferAccept,
     Jacoby,         // 2NT, a game raise of the major
+    RaiseNT,        // 2NT, a raise with four trumps; `suit` is trumps
     Shortness,      // in `suit`, after Jacoby 2NT
     Blackwood,      // asks for aces; `suit` is trumps
     AceReply,       // `suit` holds the number of aces, 0 for none or four

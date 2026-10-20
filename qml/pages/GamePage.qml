@@ -26,11 +26,8 @@ Page {
     // North's cards are face up once you play them: you declare, or north
     // does and dummy is yours.
     readonly property bool northUp: playing && (game.declarer === 2 || (game.dummy === 2 && game.dummyVisible))
-    // West or east as dummy, laid out in columns at the side.
+    // West or east as dummy, face up at the side.
     readonly property int sideDummy: playing && game.dummyVisible && (game.dummy === 1 || game.dummy === 3) ? game.dummy : -1
-    readonly property real dummyCardWidth: Math.round(cardWidth * 0.5)
-    // The trick makes room for a dummy at the side.
-    readonly property real trickShift: sideDummy === 1 ? Math.round(cardWidth * 0.35) : sideDummy === 3 ? -Math.round(cardWidth * 0.35) : 0
 
     // The call whose meaning is shown, and that meaning.
     property int explained: -1
@@ -67,7 +64,7 @@ Page {
 
     // Where each player's card goes on the table.
     function trickSpot(player) {
-        var x = (page.width - cardWidth) / 2 + trickShift
+        var x = (page.width - cardWidth) / 2
         var top = cluster.y + tableRow.y
         var middle = top + (tableRow.height - cardHeight) / 2
         switch (player) {
@@ -140,46 +137,28 @@ Page {
             for (i = 0; i < n; ++i)
                 p[ids[i]] = { x: x0 + i * off, y: northY, z: 30 + i, down: false, rot: 0, role: "hand", seat: 2, delay: 0 }
         } else {
-            off = n > 1 ? Math.min(cw * (sideDummy >= 0 ? 0.12 : 0.22), (w - 2 * margin - cw) / (n - 1)) : 0
-            x0 = (w - cw - (n - 1) * off) / 2 + trickShift
+            off = n > 1 ? Math.min(cw * 0.22, (w - 2 * margin - cw) / (n - 1)) : 0
+            x0 = (w - cw - (n - 1) * off) / 2
             for (i = 0; i < n; ++i)
                 p[ids[i]] = { x: x0 + i * off, y: northY, z: 30 + i, down: true, rot: 0, role: "bot", delay: dealing ? i * 30 : 0 }
         }
 
-        // West and east hold their cards sideways at the edges; a dummy
-        // there lies face up, a column for each suit.
+        // West and east hold their cards sideways at the edges. A dummy
+        // there lies face up, spread from north's row down so the corners
+        // show; east's is turned the other way, its corners towards you,
+        // and runs up from the bottom as east would hold it.
         for (s = 1; s <= 3; s += 2) {
             ids = hands[s]
             n = ids.length
-            if (s === sideDummy) {
-                var columns = []
-                for (i = 0; i < n; ++i) {
-                    if (columns.length === 0 || Cards.suit(columns[columns.length - 1][0]) !== Cards.suit(ids[i]))
-                        columns.push([])
-                    columns[columns.length - 1].push(ids[i])
-                }
-                var dw = dummyCardWidth
-                var dh = Math.round(dw * 1.42)
-                var step = Math.round(dw * 0.5)
-                var longest = 1
-                for (i = 0; i < columns.length; ++i)
-                    longest = Math.max(longest, columns[i].length)
-                var room = tableRow.y + tableRow.height - northRow.y
-                off = longest > 1 ? Math.min(dh * 0.4, (room - dh) / (longest - 1)) : 0
-                var spread = dw + (columns.length - 1) * step
-                x0 = s === 1 ? Theme.paddingSmall : w - Theme.paddingSmall - spread
-                for (var c = 0; c < columns.length; ++c)
-                    for (k = 0; k < columns[c].length; ++k)
-                        p[columns[c][k]] = { x: x0 + c * step, y: northY + k * off, z: 30 + c * 20 + k, down: false, rot: 0,
-                                             role: "dummy", small: true, delay: 0 }
-                continue
-            }
-            off = n > 1 ? Math.min(cw * 0.3, (tableRow.height - cw) / (n - 1)) : 0
+            var open = s === sideDummy
+            var turned = open && s === 3
+            var span = open ? tableY + tableRow.height - northY : tableRow.height
+            off = n > 1 ? Math.min(cw * (open ? 0.5 : 0.3), (span - cw) / (n - 1)) : 0
             var centreX = s === 1 ? sideShown - ch / 2 : w - sideShown + ch / 2
-            var centreY = tableY + (tableRow.height - (n - 1) * off) / 2
+            var centreY = (open ? northY : tableY) + (span - (n - 1) * off) / 2
             for (i = 0; i < n; ++i)
-                p[ids[i]] = { x: centreX - cw / 2, y: centreY + i * off - ch / 2, z: 30 + i, down: true, rot: 90,
-                              role: "bot", delay: dealing ? i * 30 : 0 }
+                p[ids[i]] = { x: centreX - cw / 2, y: centreY + (turned ? n - 1 - i : i) * off - ch / 2, z: 30 + i,
+                              down: !open, rot: turned ? -90 : 90, role: "bot", delay: dealing ? i * 30 : 0 }
         }
 
         // The trick, each card in front of whoever played it; the winning
@@ -349,7 +328,8 @@ Page {
                         calls: game.auction
                         dealer: game.dealer
                         turn: page.bidding ? game.turn : -1
-                        selectedIndex: page.explained
+                        // The latest call is explained on its own; the mark goes to whoever calls next.
+                        selectedIndex: page.bidding && page.explained === game.auction.length - 1 ? -1 : page.explained
                         onCallClicked: page.showCall(index)
                     }
                 }
@@ -604,7 +584,7 @@ Page {
                         rotation = place.rot
                     }
 
-                    width: place.small === true ? page.dummyCardWidth : cardWidth
+                    width: cardWidth
                     cardId: index
                     faceDown: place.down
                     z: place.z
@@ -636,10 +616,6 @@ Page {
                             PauseAnimation { duration: card.moveDelay }
                             NumberAnimation { duration: 320; easing.type: Easing.OutCubic }
                         }
-                    }
-                    Behavior on width {
-                        enabled: card.ready
-                        NumberAnimation { duration: 320; easing.type: Easing.OutCubic }
                     }
                     Behavior on opacity { FadeAnimation { } }
                     Behavior on rotation {

@@ -72,7 +72,7 @@ Item {
                         anchors { fill: parent; margins: Theme.paddingSmall / 2 }
                         radius: Theme.paddingSmall
                         color: Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
-                        visible: parent.isCall && callIndex === root.selectedIndex
+                        visible: parent.isCall ? callIndex === root.selectedIndex : callIndex >= 0 && root.turn >= 0
                     }
                     Label {
                         anchors.centerIn: parent

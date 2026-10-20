@@ -83,7 +83,7 @@ TEST(cards_and_calls)
     CHECK_EQ(hcp(parseCards("AS KH QD JC 10S")), 10);
     Cards hand = parseCards("2C AD KS 3H AH 5D");
     sortHand(hand);
-    CHECK(hand == parseCards("KS AH 3H 2C AD 5D"));
+    CHECK(hand == parseCards("2C 5D AD 3H AH KS"));
 
     for (int id = 0; id <= 37; ++id)
         CHECK_EQ(Call::fromId(id).id(), id);
@@ -359,6 +359,27 @@ TEST(other_systems_open_differently)
     CHECK(is(next(SystemId::Acol, "AS KS 5S 4S AH QH 3H 2H 4D 3D QC 3C 2C", ""), "1H"));
     // Precision's 2D: short diamonds.
     CHECK(is(next(SystemId::Precision, "AS KS 5S 4S KH QH 3H 2H 4D QC 4C 3C 2C", ""), "2D"));
+}
+
+TEST(enkel_modern_standard)
+{
+    const SystemId s = SystemId::ModernStandard;
+    // Of four-card suits hearts first, then spades, then the better minor.
+    CHECK(is(next(s, "AS KS 5S 4S AH 4H 3H 2H 4D 3D QC 3C 2C", ""), "1H"));
+    CHECK(is(next(s, "AS KS 5S 4S 4H 3H 2H KD QD 3D 2D 3C 2C", ""), "1S"));
+    CHECK(is(next(s, "AS 5S 4S 3H 2H KD QD 3D 2D AC 4C 3C 2C", ""), "1D"));
+    CHECK(is(next(s, "AS KS 5S 4S 3S AH KH 4H 3H 2H 4D 3C 2C", ""), "1S"));  // the higher of two fives
+    CHECK(is(next(s, "KS QS 5S KH QH 3H AD 4D 3D 2D QC 3C 2C", ""), "1NT"));
+    // 2NT raises any suit with four trumps and 13.
+    CHECK(is(next(s, "AS 5S 4S KH QH 3H 2H AD 3D 2D QC 3C 2C", "1H P"), "2NT"));
+    CHECK(meaningOf(s, "1H P 2NT", 2).convention == Convention::RaiseNT);
+    CHECK(is(next(s, "5S KH 3H 2H AD QD 3D AC QC 5C 4C 3C 2C", "1C P"), "2NT"));
+    CHECK(is(next(s, "AS KS 5S 4S AH 4H 3H 2H 4D 3D QC 3C 2C", "1H P 2NT P"), "3NT"));
+    // 2D is the only answer to 2C.
+    CHECK(is(next(s, "5S 4S AH KH QH 3H 2H 4D 3D 2D 4C 3C 2C", "2C P"), "2D"));
+    // A raise of a weak two invites game.
+    CHECK(is(next(s, "AS 5S 4S AH 3H AD 4D 3D 2D QC JC 3C 2C", "2H P"), "3H"));
+    CHECK(meaningOf(s, "2H P 3H", 2).force == Force::Invitational);
 }
 
 TEST(stayman_and_transfers)
