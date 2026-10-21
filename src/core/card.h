@@ -17,6 +17,9 @@ using cards::Spades;
 using cards::parseCard;
 using cards::parseCards;
 using cards::fullDeck;
+using cards::contains;
+using cards::removeCard;
+using cards::countSuit;
 
 // Strains rank as the suits do, from clubs up, with no trumps on top.
 constexpr int NoTrump = 4;
@@ -32,9 +35,6 @@ int hcp(const Cards &cards);
 
 // Clubs, diamonds, hearts, spades, each from the two up.
 void sortHand(Cards &cards);
-
-bool contains(const Cards &cards, const Card &card);
-void removeCard(Cards &cards, const Card &card);
 
 // Pass, double, redouble or a bid of one to seven in a strain.
 struct Call {

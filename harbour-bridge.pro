@@ -8,6 +8,7 @@ DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 # The card code shared with the other card games, a git submodule.
 !exists($$PWD/sailfish-cards/cards.pri): error("sailfish-cards is missing: run git submodule update --init")
 include($$PWD/sailfish-cards/cards.pri)
+include($$PWD/sailfish-cards/online.pri)
 
 SOURCES += src/harbour-bridge.cpp \
     src/gamecontroller.cpp \
@@ -33,7 +34,6 @@ HEADERS += src/gamecontroller.h \
 DISTFILES += qml/harbour-bridge.qml \
     qml/components/AuctionTable.qml \
     qml/components/BiddingBox.qml \
-    qml/components/CallButton.qml \
     qml/components/SideScore.qml \
     qml/components/Suits.js \
     qml/cover/CoverPage.qml \
@@ -55,6 +55,7 @@ DISTFILES += qml/harbour-bridge.qml \
 SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
 
 CONFIG += sailfishapp_i18n
+TRANSLATIONS += translations/harbour-bridge-sv.ts
 
 # Rule tests: plain C++, no Qt. `make check` here, or `make -C tests` on any host.
 check.commands = $(CXX) -std=c++17 -O2 -I$$CARDS_DIR/src -o test_rules $$PWD/tests/test_rules.cpp \

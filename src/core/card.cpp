@@ -22,18 +22,6 @@ void sortHand(Cards &cards)
     });
 }
 
-bool contains(const Cards &cards, const Card &card)
-{
-    return std::find(cards.begin(), cards.end(), card) != cards.end();
-}
-
-void removeCard(Cards &cards, const Card &card)
-{
-    auto it = std::find(cards.begin(), cards.end(), card);
-    if (it != cards.end())
-        cards.erase(it);
-}
-
 Call Call::fromId(int id)
 {
     if (id == Double)

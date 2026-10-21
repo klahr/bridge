@@ -9,4 +9,4 @@ Name[sv]=Bridge
 [X-Sailjail]
 OrganizationName=rs.r8
 ApplicationName=harbour-bridge
-Permissions=
+Permissions=Internet

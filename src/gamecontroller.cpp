@@ -1,7 +1,11 @@
 #include "gamecontroller.h"
 
-#include <QStandardPaths>
+#include "cards/settings.h"
+#include "cards/variant.h"
+
 #include <QStringList>
+
+#include <algorithm>
 
 using namespace bridge;
 
@@ -11,14 +15,6 @@ namespace {
 // table, from slow to very fast.
 const int BotDelayMs[] = {1100, 750, 450, 200};
 const int TrickHoldMs[] = {1800, 1200, 800, 450};
-
-QVariantList ids(const Cards &cards)
-{
-    QVariantList out;
-    for (const Card &c : cards)
-        out << c.id();
-    return out;
-}
 
 QVariantMap contractMap(const Contract &c)
 {
@@ -55,19 +51,27 @@ QVariantMap dealMap(const DealRecord &r)
 
 } // namespace
 
-GameController::GameController(QObject *parent)
+GameController::GameController(Session *online, QObject *parent)
     : QObject(parent)
-    // Sailjail lets the app write only in its own folder.
-    , m_settings(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + QStringLiteral("/harbour-bridge.conf"),
-                 QSettings::IniFormat)
+    , m_online(online)
+    , m_settings(cards::settingsPath(), QSettings::IniFormat)
 {
     m_difficulty = qBound(0, m_settings.value(QStringLiteral("difficulty"), 1).toInt(), 2);
     m_scoring = qBound(0, m_settings.value(QStringLiteral("scoring"), 0).toInt(), 1);
     m_system = qBound(0, m_settings.value(QStringLiteral("system"), 0).toInt(), SystemCount - 1);
     m_theirSystem = qBound(0, m_settings.value(QStringLiteral("theirSystem"), 0).toInt(), SystemCount - 1);
     m_speed = qBound(0, m_settings.value(QStringLiteral("speed"), 1).toInt(), 3);
+    m_tapTwice = m_settings.value(QStringLiteral("tapTwice"), false).toBool();
     m_botTimer.setSingleShot(true);
     connect(&m_botTimer, &QTimer::timeout, this, &GameController::botStep);
+    connect(m_online, &Session::reset, this, &GameController::replay);
+    connect(m_online, &Session::action, this, [this](const QVariantMap &a) {
+        if (!m_online->active())
+            return;
+        applyAction(a);
+        afterAction();
+    });
+    connect(m_online, &Session::tableChanged, this, &GameController::tableChanged);
 }
 
 int GameController::phase() const
@@ -163,6 +167,11 @@ QVariantList GameController::trick() const
     return out;
 }
 
+QVariantList GameController::lastTrick() const
+{
+    return cards::lastTrick(m_game.played(), m_game.tricksPlayed(), Game::Players, m_game.leader());
+}
+
 QVariantList GameController::tricks() const
 {
     return QVariantList() << m_game.tricks(0) << m_game.tricks(1);
@@ -194,6 +203,9 @@ QVariantList GameController::taken() const
 
 bool GameController::controls(int seat) const
 {
+    // Online you play your own cards, and dummy's when you declare.
+    if (m_online->active())
+        return (m_game.phase() == bridge::Phase::Play ? m_game.controller(seat) : seat) == Human;
     if (seat == Human)
         return true;
     return seat == partnerOf(Human) && m_game.contract().valid() && sideOf(m_game.declarer()) == sideOf(Human);
@@ -297,6 +309,15 @@ void GameController::setSpeed(int speed)
     emit speedChanged();
 }
 
+void GameController::setTapTwice(bool on)
+{
+    if (on == m_tapTwice)
+        return;
+    m_tapTwice = on;
+    m_settings.setValue(QStringLiteral("tapTwice"), on);
+    emit tapTwiceChanged();
+}
+
 QVariantList GameController::stats() const
 {
     QVariantList out;
@@ -318,6 +339,8 @@ void GameController::resetStats()
 
 QString GameController::playerName(int player) const
 {
+    if (m_online->active() && player > 0 && player < Game::Players)
+        return m_online->playerName(m_online->toTable(player));
     switch (player) {
     case 0:
         return tr("You");
@@ -580,18 +603,37 @@ int GameController::hint() const
     return m_game.bidding().choose(m_game.auction(), m_game.hand(Human)).id();
 }
 
+void GameController::start()
+{
+    if (m_online->active())
+        return;
+    m_botTimer.stop();
+    m_game = bridge::Game();
+    m_started = false;
+    bool ok = true;
+    for (const QVariant &a : m_log.load())
+        ok = ok && applyAction(a.toMap());
+    if (!ok || !m_started) {
+        newGame();
+        return;
+    }
+    // Whatever was counted before the app closed is not counted again.
+    m_countedDeals = static_cast<int>(m_game.score().deals().size());
+    m_recorded = m_game.phase() == bridge::Phase::GameOver;
+    afterAction();
+}
+
 void GameController::newGame()
 {
+    if (m_online->active()) {
+        if (!m_started || m_game.phase() == bridge::Phase::GameOver)
+            sendNew();
+        return;
+    }
     m_botTimer.stop();
-    m_bot.setDifficulty(static_cast<Difficulty>(m_difficulty));
-    m_game.setScoring(static_cast<Scoring>(m_scoring));
-    m_game.bidding().setSystem(0, static_cast<SystemId>(m_system));
-    m_game.bidding().setSystem(1, static_cast<SystemId>(m_theirSystem));
-    m_game.newGame();
-    m_started = true;
-    m_recorded = false;
-    m_countedDeals = 0;
-    afterAction();
+    m_log.clear();
+    m_started = false;
+    perform(newAction());
 }
 
 bool GameController::canCall(int callId) const
@@ -602,10 +644,11 @@ bool GameController::canCall(int callId) const
 
 bool GameController::call(int callId)
 {
-    if (!canCall(callId) || !m_game.call(Human, Call::fromId(callId)))
+    if (!canCall(callId))
         return false;
-    afterAction();
-    return true;
+    return perform({{QStringLiteral("t"), QStringLiteral("call")},
+                    {QStringLiteral("seat"), m_online->toTable(Human)},
+                    {QStringLiteral("call"), callId}});
 }
 
 bool GameController::canPlay(int cardId) const
@@ -615,18 +658,22 @@ bool GameController::canPlay(int cardId) const
 
 bool GameController::play(int cardId)
 {
-    if (!canPlay(cardId) || !m_game.play(m_game.turn(), Card::fromId(cardId)))
+    if (!canPlay(cardId))
         return false;
-    afterAction();
-    return true;
+    return perform({{QStringLiteral("t"), QStringLiteral("play")},
+                    {QStringLiteral("seat"), m_online->toTable(m_game.turn())},
+                    {QStringLiteral("card"), cardId}});
 }
 
 bool GameController::nextDeal()
 {
-    if (!m_game.nextDeal())
-        return false;
-    afterAction();
-    return true;
+    if (m_online->active()) {
+        if (m_game.phase() != bridge::Phase::Score)
+            return false;
+        m_online->send({{QStringLiteral("t"), QStringLiteral("next")}, {QStringLiteral("deck"), shuffledDeck()}});
+        return true;
+    }
+    return perform({{QStringLiteral("t"), QStringLiteral("next")}, {QStringLiteral("deck"), shuffledDeck()}});
 }
 
 void GameController::afterAction()
@@ -634,8 +681,16 @@ void GameController::afterAction()
     if (!m_started)
         return;
     const bridge::Phase p = m_game.phase();
+    // Online games stay out of the statistics, which are about the bots.
+    if (m_online->active()) {
+        m_botTimer.stop();
+        if (!m_online->driver()) {
+            emit changed();
+            return;
+        }
+    }
     const int counted = static_cast<int>(m_game.score().deals().size());
-    if ((p == bridge::Phase::Score || p == bridge::Phase::GameOver) && counted != m_countedDeals) {
+    if ((p == bridge::Phase::Score || p == bridge::Phase::GameOver) && counted != m_countedDeals && !m_online->active()) {
         m_countedDeals = counted;
         const DealRecord *r = m_game.lastDeal();
         // Your contracts, made or not, whichever of you two declared.
@@ -645,17 +700,17 @@ void GameController::afterAction()
             emit statsChanged();
         }
     }
-    if (p == bridge::Phase::GameOver)
+    if (p == bridge::Phase::GameOver && !m_online->active())
         recordResult();
 
-    if (p == bridge::Phase::Bidding && m_game.turn() != Human) {
+    if (p == bridge::Phase::Bidding && botPlays(m_game.turn())) {
         m_botTimer.setInterval(BotDelayMs[m_speed]);
         m_botTimer.start();
     } else if (p == bridge::Phase::Play) {
         if (m_game.trickComplete()) {
             m_botTimer.setInterval(TrickHoldMs[m_speed]);
             m_botTimer.start();
-        } else if (!controls(m_game.turn())) {
+        } else if (botPlays(m_game.turn())) {
             m_botTimer.setInterval(BotDelayMs[m_speed]);
             m_botTimer.start();
         }
@@ -665,24 +720,27 @@ void GameController::afterAction()
 
 void GameController::botStep()
 {
+    if (m_online->active() && !m_online->driver())
+        return;
     if (m_game.phase() == bridge::Phase::Bidding) {
         const int player = m_game.turn();
-        if (player == Human)
+        if (!botPlays(player))
             return;
-        m_game.call(player, m_bot.chooseCall(m_game, player));
+        perform({{QStringLiteral("t"), QStringLiteral("call")},
+                 {QStringLiteral("seat"), m_online->toTable(player)},
+                 {QStringLiteral("call"), m_bot.chooseCall(m_game, player).id()}});
     } else if (m_game.phase() == bridge::Phase::Play) {
         if (m_game.trickComplete()) {
-            m_game.collectTrick();
+            perform({{QStringLiteral("t"), QStringLiteral("collect")}});
         } else {
             const int player = m_game.turn();
-            if (controls(player))
+            if (!botPlays(player))
                 return;
-            m_game.play(player, m_bot.choosePlay(m_game, player));
+            perform({{QStringLiteral("t"), QStringLiteral("play")},
+                     {QStringLiteral("seat"), m_online->toTable(player)},
+                     {QStringLiteral("card"), m_bot.choosePlay(m_game, player).id()}});
         }
-    } else {
-        return;
     }
-    afterAction();
 }
 
 void GameController::recordResult()
@@ -696,4 +754,125 @@ void GameController::recordResult()
     const QString key = QStringLiteral("stats/%1/%2").arg(gameDifficulty()).arg(w == sideOf(Human) ? QStringLiteral("won") : QStringLiteral("lost"));
     m_settings.setValue(key, m_settings.value(key, 0).toInt() + 1);
     emit statsChanged();
+}
+
+bool GameController::botPlays(int seat) const
+{
+    if (seat < 0)
+        return false;
+    if (!m_online->active())
+        return !controls(seat);
+    const int chooser = m_game.phase() == bridge::Phase::Play ? m_game.controller(seat) : seat;
+    return m_online->isBot(m_online->toTable(chooser));
+}
+
+bool GameController::perform(const QVariantMap &action)
+{
+    if (m_online->active()) {
+        m_online->send(action);
+        return true;
+    }
+    if (!applyAction(action))
+        return false;
+    m_log.append(action);
+    afterAction();
+    return true;
+}
+
+bool GameController::applyAction(const QVariantMap &a)
+{
+    const QString t = a.value(QStringLiteral("t")).toString();
+    const int seat = a.value(QStringLiteral("seat")).toInt();
+    if (t == QLatin1String("new")) {
+        Cards deck;
+        if ((m_started && m_game.phase() != bridge::Phase::GameOver) || !deckFrom(a.value(QStringLiteral("deck")), &deck))
+            return false;
+        // The systems come by the table's sides; yours is side 0 here.
+        const QVariantList systems = a.value(QStringLiteral("systems")).toList();
+        m_bot.setDifficulty(static_cast<Difficulty>(qBound(0, a.value(QStringLiteral("difficulty"), m_difficulty).toInt(), 2)));
+        m_game.setScoring(static_cast<Scoring>(qBound(0, a.value(QStringLiteral("scoring")).toInt(), 1)));
+        for (int side = 0; side < 2; ++side) {
+            const int system = qBound(0, systems.value(m_online->toTable(side) % 2).toInt(), SystemCount - 1);
+            m_game.bidding().setSystem(side, static_cast<SystemId>(system));
+        }
+        m_game.newGame(deck, m_online->toLocal(qBound(0, a.value(QStringLiteral("dealer")).toInt(), Game::Players - 1)));
+        m_started = true;
+        m_recorded = false;
+        m_countedDeals = 0;
+        return true;
+    }
+    if (!m_started || seat < 0 || seat >= Game::Players)
+        return false;
+    if (t == QLatin1String("call"))
+        return m_game.call(m_online->toLocal(seat), Call::fromId(a.value(QStringLiteral("call")).toInt()));
+    if (t == QLatin1String("play"))
+        return m_game.play(m_online->toLocal(seat), Card::fromId(qBound(0, a.value(QStringLiteral("card")).toInt(), 51)));
+    if (t == QLatin1String("collect"))
+        return m_game.collectTrick();
+    if (t == QLatin1String("next")) {
+        Cards deck;
+        return deckFrom(a.value(QStringLiteral("deck")), &deck) && m_game.nextDeal(deck);
+    }
+    return false;
+}
+
+void GameController::replay()
+{
+    if (!m_online->active())
+        return;
+    m_botTimer.stop();
+    m_game = bridge::Game();
+    m_started = false;
+    for (const QVariant &a : m_online->actions())
+        applyAction(a.toMap());
+    if (!m_started && m_online->synced() && m_online->actions().isEmpty() && m_online->driver())
+        sendNew();
+    afterAction();
+    emit changed();
+}
+
+void GameController::tableChanged()
+{
+    const bool active = m_online->active();
+    if (m_wasActive != active) {
+        m_wasActive = active;
+        // Back from the table to your own game against the bots.
+        if (!active)
+            start();
+        else
+            replay();
+        return;
+    }
+    if (active && !m_started && m_online->synced() && m_online->actions().isEmpty() && m_online->driver())
+        sendNew();
+    // The driver may have changed, or a bot taken over a seat.
+    afterAction();
+    emit changed();
+}
+
+void GameController::sendNew()
+{
+    m_online->send(newAction());
+}
+
+QVariantMap GameController::newAction()
+{
+    // The table's sides: the one you sit on bids your system.
+    const int seat = m_online->toTable(0);
+    QVariantList systems = {0, 0};
+    systems[seat % 2] = m_system;
+    systems[(seat + 1) % 2] = m_theirSystem;
+    return {{QStringLiteral("t"), QStringLiteral("new")},
+            {QStringLiteral("scoring"), m_scoring},
+            {QStringLiteral("systems"), systems},
+            {QStringLiteral("difficulty"), m_difficulty},
+            {QStringLiteral("dealer"), std::uniform_int_distribution<int>(0, Game::Players - 1)(m_rng)},
+            {QStringLiteral("deck"), shuffledDeck()}};
+}
+
+QVariantList GameController::shuffledDeck()
+{
+    Cards deck = fullDeck();
+    std::shuffle(deck.begin(), deck.end(), m_rng);
+    return ids(deck);
 }

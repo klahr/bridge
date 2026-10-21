@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../cards"
 import "Suits.js" as Suits
 
 // Choose a level, then a strain; or pass, double or redouble. Press and

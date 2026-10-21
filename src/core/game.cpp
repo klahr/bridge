@@ -145,13 +145,18 @@ void Game::scoreDeal()
 
 bool Game::nextDeal()
 {
+    Cards deck = fullDeck();
+    std::shuffle(deck.begin(), deck.end(), m_rng);
+    return nextDeal(deck);
+}
+
+bool Game::nextDeal(const Cards &deck)
+{
     if (m_phase != Phase::Score)
         return false;
     // A deal passed out in Chicago is dealt again by the same dealer.
     if (!(m_sheet.mode() == Scoring::Chicago && lastDeal() && lastDeal()->passedOut()))
         m_dealer = (m_dealer + 1) % Players;
-    Cards deck = fullDeck();
-    std::shuffle(deck.begin(), deck.end(), m_rng);
     dealFrom(deck);
     return true;
 }

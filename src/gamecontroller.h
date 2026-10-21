@@ -2,12 +2,16 @@
 
 #include "core/bot.h"
 #include "core/game.h"
+#include "cards/gamelog.h"
+#include "online/session.h"
 
 #include <QObject>
 #include <QSettings>
 #include <QTimer>
 #include <QVariantList>
 #include <QVariantMap>
+
+#include <random>
 
 class GameController : public QObject
 {
@@ -26,6 +30,7 @@ class GameController : public QObject
     Q_PROPERTY(int dummy READ dummy NOTIFY changed)
     Q_PROPERTY(bool dummyVisible READ dummyVisible NOTIFY changed)
     Q_PROPERTY(QVariantList trick READ trick NOTIFY changed)
+    Q_PROPERTY(QVariantList lastTrick READ lastTrick NOTIFY changed)
     Q_PROPERTY(int trickWinner READ trickWinner NOTIFY changed)
     Q_PROPERTY(int tricksPlayed READ tricksPlayed NOTIFY changed)
     Q_PROPERTY(QVariantList tricks READ tricks NOTIFY changed)
@@ -49,12 +54,13 @@ class GameController : public QObject
     Q_PROPERTY(int theirSystem READ theirSystem WRITE setTheirSystem NOTIFY systemChanged)
     Q_PROPERTY(QVariantList stats READ stats NOTIFY statsChanged)
     Q_PROPERTY(int speed READ speed WRITE setSpeed NOTIFY speedChanged)
+    Q_PROPERTY(bool tapTwice READ tapTwice WRITE setTapTwice NOTIFY tapTwiceChanged)
 
 public:
     enum Phase { Bidding, Play, Score, GameOver };
     Q_ENUM(Phase)
 
-    explicit GameController(QObject *parent = nullptr);
+    explicit GameController(Session *online, QObject *parent = nullptr);
 
     int phase() const;
     int dealer() const { return m_game.dealer(); }
@@ -77,6 +83,8 @@ public:
     bool dummyVisible() const { return m_game.dummyVisible(); }
     // The cards on the table, each with who played it.
     QVariantList trick() const;
+    // The trick gathered before, to look back at.
+    QVariantList lastTrick() const;
     int trickWinner() const { return m_game.trickWinner(); }
     int tricksPlayed() const { return m_game.tricksPlayed(); }
     // Tricks taken by north-south and east-west.
@@ -113,7 +121,13 @@ public:
     // 0 = slow ... 3 = very fast; how long the bots think and tricks stay.
     int speed() const { return m_speed; }
     void setSpeed(int speed);
+    // A card is played by a second tap; the first raises it.
+    bool tapTwice() const { return m_tapTwice; }
+    void setTapTwice(bool on);
 
+    // Carries on the game against the bots from when the app last closed,
+    // or deals a new one.
+    Q_INVOKABLE void start();
     Q_INVOKABLE void newGame();
     Q_INVOKABLE bool call(int callId);
     Q_INVOKABLE bool play(int cardId);
@@ -147,6 +161,7 @@ signals:
     void systemChanged();
     void statsChanged();
     void speedChanged();
+    void tapTwiceChanged();
 
 private:
     static constexpr int Human = 0;
@@ -157,9 +172,29 @@ private:
     void botStep();
     void recordResult();
 
+    // Whether a bot chooses for `seat` here: online, only the driver's.
+    bool botPlays(int seat) const;
+    // Makes a move: offline at once, online once it comes back from the server.
+    bool perform(const QVariantMap &action);
+    // Makes a move from the log, or one of your own offline; false if it does not fit.
+    bool applyAction(const QVariantMap &action);
+    // Starts the game over from the moves in the log.
+    void replay();
+    void tableChanged();
+    void sendNew();
+    // A new game with the settings, as a move.
+    QVariantMap newAction();
+    QVariantList shuffledDeck();
+
     bridge::Game m_game;
     // Plays all the seats you do not; it only knows what the seat may see.
     bridge::Bot m_bot;
+    Session *m_online;
+    // The moves of the game against the bots.
+    cards::GameLog m_log;
+    bool m_wasActive = false;
+    // Deals for the online games.
+    std::mt19937 m_rng{std::random_device{}()};
     QSettings m_settings;
     QTimer m_botTimer;
     int m_difficulty = 1;
@@ -167,6 +202,7 @@ private:
     int m_system = 0;
     int m_theirSystem = 0;
     int m_speed = 1;
+    bool m_tapTwice = false;
     bool m_started = false;
     bool m_recorded = false;
     int m_countedDeals = 0; // deals already counted for the statistics

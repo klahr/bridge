@@ -13,11 +13,6 @@ const int SolveSamples = 20;
 // Positions with this many cards left are solved exactly.
 const int SolveCards = 24;
 
-int countSuit(const Cards &cards, int suit)
-{
-    return static_cast<int>(std::count_if(cards.begin(), cards.end(), [suit](const Card &c) { return c.suit == suit; }));
-}
-
 Card lowest(const Cards &cards)
 {
     return *std::min_element(cards.begin(), cards.end(), [](const Card &a, const Card &b) { return a.high() < b.high(); });

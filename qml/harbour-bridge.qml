@@ -7,5 +7,5 @@ ApplicationWindow {
     cover: Qt.resolvedUrl("cover/CoverPage.qml")
     allowedOrientations: Orientation.Portrait
 
-    Component.onCompleted: game.newGame()
+    Component.onCompleted: game.start()
 }

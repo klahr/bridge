@@ -89,6 +89,13 @@ Page {
                 onCurrentIndexChanged: game.speed = currentIndex
             }
 
+            TextSwitch {
+                text: qsTr("Tap twice to play")
+                description: qsTr("The first tap raises a card and the second plays it; tap anywhere else to lower it again.")
+                checked: game.tapTwice
+                onCheckedChanged: game.tapTwice = checked
+            }
+
             SectionHeader { text: qsTr("Statistics") }
 
             Repeater {

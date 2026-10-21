@@ -5,6 +5,7 @@ import "../components"
 import "../components/Suits.js" as Suits
 import "../cards"
 import "../cards/cards.js" as Cards
+import "../online"
 
 Page {
     id: page
@@ -35,6 +36,16 @@ Page {
     property int suggestion: -1
 
     readonly property var places: computePlaces()
+    // Holding the table: the last trick shows over this one.
+    readonly property bool peeking: peek.peeking && game.lastTrick.length > 0
+
+    function lastTrickWinner() {
+        var last = game.lastTrick
+        for (var i = 0; i < last.length; ++i)
+            if (last[i].won)
+                return last[i].player
+        return -1
+    }
 
     allowedOrientations: Orientation.Portrait
 
@@ -170,6 +181,18 @@ Page {
                                  glow: trick[i].player === game.trickWinner,
                                  glowColor: Cards.playerColor(trick[i].player) }
         }
+
+        // Held down on the table: the last trick back up, over this one.
+        if (peeking) {
+            for (i = 0; i < trick.length; ++i)
+                p[trick[i].card].hidden = true
+            var last = game.lastTrick
+            for (i = 0; i < last.length; ++i) {
+                spot = trickSpot(last[i].player)
+                p[last[i].card] = { x: spot.x, y: spot.y, z: 300 + i, down: false, rot: 0, role: "last", delay: 0,
+                                    glow: last[i].won, glowColor: Cards.playerColor(last[i].player) }
+            }
+        }
         return p
     }
 
@@ -187,6 +210,8 @@ Page {
     }
 
     RemorsePopup { id: remorse }
+
+    ConnectionBanner { }
 
     SilicaFlickable {
         anchors.fill: parent
@@ -210,7 +235,13 @@ Page {
                 onClicked: pageStack.push(Qt.resolvedUrl("ScorePage.qml"))
             }
             MenuItem {
+                text: online.active ? qsTr("Online table") : qsTr("Play online")
+                onClicked: pageStack.push(Qt.resolvedUrl(online.atTable ? "../online/TablePage.qml" : "../online/LobbyPage.qml"))
+            }
+            MenuItem {
                 text: qsTr("New game")
+                // Online, the game must end first.
+                visible: !online.active || game.phase === Bridge.GameOver
                 onClicked: page.startNewGame()
             }
         }
@@ -366,6 +397,9 @@ Page {
                                 }
                                 if (!page.playing)
                                     return ""
+                                if (page.peeking)
+                                    return page.lastTrickWinner() === 0 ? page.coloured(0, qsTr("You won the last trick."))
+                                                                        : qsTr("%1 won the last trick.").arg(page.named(page.lastTrickWinner()))
                                 if (game.trickWinner >= 0)
                                     return game.trickWinner === 0 ? page.coloured(0, qsTr("You win the trick."))
                                                                   : qsTr("%1 wins the trick.").arg(page.named(game.trickWinner))
@@ -565,30 +599,31 @@ Page {
                 }
             }
 
+            // Hold the table to see the last trick.
+            PeekArea {
+                id: peek
+                y: cluster.y + tableRow.y
+                width: parent.width
+                height: tableRow.height
+                enabled: page.playing && game.lastTrick.length > 0
+            }
+
             // ---------------------------------------------------- cards
+            TapToPlay {
+                id: tapToPlay
+                twice: game.tapTwice
+            }
+
             // All 52 cards live here and glide to wherever the game puts them.
             Repeater {
                 model: 52
-                PlayingCard {
-                    id: card
-
-                    readonly property var place: page.places[index]
+                TableCard {
                     readonly property bool inHand: place.role === "hand"
-                    property int moveDelay
-                    property bool ready
 
-                    function moveToPlace() {
-                        moveDelay = place.delay
-                        x = place.x
-                        y = place.y
-                        rotation = place.rot
-                    }
-
+                    place: page.places[index]
                     width: cardWidth
                     cardId: index
-                    faceDown: place.down
-                    z: place.z
-                    opacity: place.hidden === true ? 0 : 1
+                    selected: tapToPlay.raised === index
                     glowing: place.glow === true
                     glowColor: place.glowColor !== undefined ? place.glowColor : Theme.highlightColor
                     // game.trick makes these follow the play.
@@ -596,35 +631,8 @@ Page {
                     dimmed: yours && game.trick.length >= 0 && !game.canPlay(index)
                     enabled: yours && game.trick.length >= 0 && game.canPlay(index)
 
-                    onPlaceChanged: moveToPlace()
-                    Component.onCompleted: {
-                        moveToPlace()
-                        ready = true
-                    }
-                    onClicked: game.play(index)
-
-                    Behavior on x {
-                        enabled: card.ready
-                        SequentialAnimation {
-                            PauseAnimation { duration: card.moveDelay }
-                            NumberAnimation { duration: 320; easing.type: Easing.OutCubic }
-                        }
-                    }
-                    Behavior on y {
-                        enabled: card.ready
-                        SequentialAnimation {
-                            PauseAnimation { duration: card.moveDelay }
-                            NumberAnimation { duration: 320; easing.type: Easing.OutCubic }
-                        }
-                    }
-                    Behavior on opacity { FadeAnimation { } }
-                    Behavior on rotation {
-                        enabled: card.ready
-                        SequentialAnimation {
-                            PauseAnimation { duration: card.moveDelay }
-                            NumberAnimation { duration: 320; easing.type: Easing.OutCubic }
-                        }
-                    }
+                    onEnabledChanged: if (!enabled) tapToPlay.lower(index)
+                    onClicked: if (tapToPlay.tap(index)) game.play(index)
                 }
             }
         }

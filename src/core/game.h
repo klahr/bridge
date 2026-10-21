@@ -49,6 +49,8 @@ public:
     bool collectTrick();
     // After the deal is counted, deals the next one.
     bool nextDeal();
+    // As above, from `deck` instead of a shuffled pack.
+    bool nextDeal(const Cards &deck);
 
     bool canPlayCard(int player, const Card &card) const;
     Cards legalCards(int player) const;
