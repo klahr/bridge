@@ -79,7 +79,7 @@ Item {
                         textFormat: Text.StyledText
                         text: parent.isCall ? Suits.colored(game.callText(parent.entry.call), root.red)
                                             : callIndex >= 0 ? "?" : ""
-                        color: parent.isCall ? Cards.playerColor(parent.entry.player) : Theme.secondaryHighlightColor
+                        color: parent.isCall ? Theme.primaryColor : Theme.secondaryHighlightColor
                         font.pixelSize: Theme.fontSizeMedium
                         font.family: Theme.fontFamilyHeading
                         font.bold: parent.isCall && parent.entry.alert

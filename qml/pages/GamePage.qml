@@ -70,7 +70,7 @@ Page {
             return
         }
         explained = index
-        note = named(calls[index].player) + " " + richCall(calls[index].call) + ": " + game.explain(index)
+        note = named(calls[index].player) + " " + richCall(calls[index].call) + ": " + Suits.colored(game.explain(index), red)
     }
 
     // Where each player's card goes on the table.
@@ -559,14 +559,14 @@ Page {
                     onCall: game.call(callId)
                     onExplain: {
                         page.explained = -1
-                        page.note = qsTr("%1 would show: %2").arg(page.richCall(callId)).arg(game.explainCall(callId))
+                        page.note = qsTr("%1 would show: %2").arg(page.richCall(callId)).arg(Suits.colored(game.explainCall(callId), page.red))
                     }
                     onHint: {
                         var callId = game.hint()
                         page.suggestion = callId
                         if (callId >= 0) {
                             page.explained = -1
-                            page.note = qsTr("Try %1: %2").arg(page.richCall(callId)).arg(game.explainCall(callId))
+                            page.note = qsTr("Try %1: %2").arg(page.richCall(callId)).arg(Suits.colored(game.explainCall(callId), page.red))
                         }
                     }
                 }
