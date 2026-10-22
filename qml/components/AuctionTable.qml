@@ -30,7 +30,7 @@ Item {
                 width: root.cellWidth
                 horizontalAlignment: Text.AlignHCenter
                 text: game.playerName(modelData)
-                color: Cards.playerColor(modelData)
+                color: online.seats.length && online.away(online.toTable(modelData)) ? Cards.awayColor(modelData) : Cards.playerColor(modelData)
                 font.pixelSize: Theme.fontSizeExtraSmall
                 truncationMode: TruncationMode.Fade
             }
