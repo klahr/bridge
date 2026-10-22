@@ -984,47 +984,52 @@
         <translation>Spelare</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/src/online/session.cpp" line="147"/>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="148"/>
         <source>Bot %1</source>
         <translation>Bot %1</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/src/online/session.cpp" line="149"/>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="150"/>
         <source>Player %1</source>
         <translation>Spelare %1</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/src/online/session.cpp" line="152"/>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="153"/>
         <source>%1 (bot)</source>
         <translation>%1 (bot)</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/src/online/session.cpp" line="152"/>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="153"/>
         <source>%1 (away)</source>
         <translation>%1 (borta)</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/src/online/session.cpp" line="296"/>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="299"/>
+        <source>Update the app to play online</source>
+        <translation>Uppdatera appen för att spela online</translation>
+    </message>
+    <message>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="301"/>
         <source>Wrong password</source>
         <translation>Fel lösenord</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/src/online/session.cpp" line="298"/>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="303"/>
         <source>The player has gone</source>
         <translation>Spelaren är borta</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/src/online/session.cpp" line="300"/>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="305"/>
         <source>The table is full</source>
         <translation>Bordet är fullt</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/src/online/session.cpp" line="302"/>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="307"/>
         <source>The game is gone</source>
         <translation>Spelet finns inte längre</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/src/online/session.cpp" line="327"/>
+        <location filename="../sailfish-cards/src/online/session.cpp" line="332"/>
         <source>The server does not answer</source>
         <translation>Servern svarar inte</translation>
     </message>
