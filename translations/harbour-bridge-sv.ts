@@ -675,7 +675,7 @@
     <name>LobbyPage</name>
     <message>
         <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="23"/>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="225"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="231"/>
         <source>%1&apos;s game</source>
         <translation>%1s spel</translation>
     </message>
@@ -685,139 +685,139 @@
         <translation>Spel</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="54"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="60"/>
         <source>Connect again</source>
         <translation>Anslut igen</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="59"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="65"/>
         <source>New game</source>
         <translation>Nytt spel</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="69"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="75"/>
         <source>Play online</source>
         <translation>Spela online</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="70"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="76"/>
         <source>Connected</source>
         <translation>Ansluten</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="71"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="77"/>
         <source>Connecting…</source>
         <translation>Ansluter…</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="71"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="77"/>
         <source>Not connected</source>
         <translation>Inte ansluten</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="75"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="81"/>
         <source>Your nickname</source>
         <translation>Ditt smeknamn</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="84"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="90"/>
         <source>Server</source>
         <translation>Server</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="93"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="99"/>
         <source>Show me to other players</source>
         <translation>Visa mig för andra spelare</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="94"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="100"/>
         <source>Players waiting at a table can see your nickname and invite you.</source>
         <translation>Spelare som väntar vid ett bord kan se ditt smeknamn och bjuda in dig.</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="112"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="118"/>
         <source>Invitation</source>
         <translation>Inbjudan</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="117"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="123"/>
         <source>%1 invites you to %2.</source>
         <translation>%1 bjuder in dig till %2.</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="117"/>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="118"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="123"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="124"/>
         <source>Someone</source>
         <translation>Någon</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="118"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="124"/>
         <source>%1 invites you to their table.</source>
         <translation>%1 bjuder in dig till sitt bord.</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="127"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="133"/>
         <source>No thanks</source>
         <translation>Nej tack</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="137"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="143"/>
         <source>Games</source>
         <translation>Spel</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="174"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="180"/>
         <source>Yours</source>
         <translation>Ditt</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="174"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="180"/>
         <source>Playing</source>
         <translation>Pågår</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="174"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="180"/>
         <source>Waiting</source>
         <translation>Väntar</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="196"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="202"/>
         <source>No games</source>
         <translation>Inga spel</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="197"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="203"/>
         <source>Pull down to start one</source>
         <translation>Dra ner för att starta ett</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="219"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="225"/>
         <source>Create</source>
         <translation>Skapa</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="224"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="230"/>
         <source>Name of the game</source>
         <translation>Spelets namn</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="233"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="239"/>
         <source>Password, if you want one</source>
         <translation>Lösenord, om du vill ha ett</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="234"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="240"/>
         <source>No password</source>
         <translation>Inget lösenord</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="243"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="249"/>
         <source>Players</source>
         <translation>Spelare</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="131"/>
-        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="267"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="137"/>
+        <location filename="../sailfish-cards/qml/online/LobbyPage.qml" line="273"/>
         <source>Join</source>
         <translation>Gå med</translation>
     </message>
@@ -1247,102 +1247,102 @@
 <context>
     <name>TablePage</name>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="39"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="49"/>
         <source>Leave the table</source>
         <translation>Lämna bordet</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="48"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="58"/>
         <source>Your table</source>
         <translation>Ditt bord</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="49"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="59"/>
         <source>Playing</source>
         <translation>Pågår</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="49"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="59"/>
         <source>Waiting for players</source>
         <translation>Väntar på spelare</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="55"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="65"/>
         <source>The connection is lost, trying again…</source>
         <translation>Anslutningen bröts, försöker igen…</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="63"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="73"/>
         <source>Long press someone who is away to let a bot play for them until they are back.</source>
         <translation>Håll på någon som är borta för att låta en bot spela åt dem tills de är tillbaka.</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="87"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="97"/>
         <source>Player %1</source>
         <translation>Spelare %1</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="88"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="98"/>
         <source>Bot</source>
         <translation>Bot</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="88"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="98"/>
         <source>Empty seat</source>
         <translation>Tom plats</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="100"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="110"/>
         <source>You</source>
         <translation>Du</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="102"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="112"/>
         <source>Away, bot plays</source>
         <translation>Borta, en bot spelar</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="102"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="112"/>
         <source>Away</source>
         <translation>Borta</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="112"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="122"/>
         <source>Wait for them</source>
         <translation>Vänta på dem</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="112"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="122"/>
         <source>Let a bot play</source>
         <translation>Låt en bot spela</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="131"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="141"/>
         <source>Start</source>
         <translation>Starta</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="137"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="147"/>
         <source>Invite players</source>
         <translation>Bjud in spelare</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="144"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="154"/>
         <source>No one else is in the lobby.</source>
         <translation>Ingen annan är i lobbyn.</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="169"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="179"/>
         <source>Player</source>
         <translation>Spelare</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="181"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="191"/>
         <source>Invited</source>
         <translation>Inbjuden</translation>
     </message>
     <message>
-        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="181"/>
+        <location filename="../sailfish-cards/qml/online/TablePage.qml" line="191"/>
         <source>Invite</source>
         <translation>Bjud in</translation>
     </message>
